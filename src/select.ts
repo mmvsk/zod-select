@@ -1,5 +1,6 @@
 import {
-	ZodTypeAny,
+	ZodType,
+	ZodTypeDef,
 	ZodTuple,
 	ZodUnion,
 	ZodArray,
@@ -16,6 +17,8 @@ import {
 } from "./traversable";
 
 
+type AnyZodType = ZodType<any, ZodTypeDef, any>;
+
 type ArrayIndex = "*" | null;
 type TupleIndex = number | `${number}`;
 type Segment = string | number | null; // ArrayIndex | TupleIndex | NonNumericString
@@ -29,14 +32,14 @@ export type Path = readonly [Segment, ...Segment[]];
 
 
 export type InferAt<
-	T extends ZodTypeAny,
+	T extends AnyZodType,
 	P extends Path | string,
 	S extends string = "."
 > = Infer<SchemaAt<T, P, S>>;
 
 
 export type SchemaAt<
-	T extends ZodTypeAny,
+	T extends AnyZodType,
 	P extends Path | string,
 	S extends string = "."
 > =
@@ -46,7 +49,7 @@ export type SchemaAt<
 
 
 type SelectSchemaAt<
-	T extends ZodTypeAny,
+	T extends AnyZodType,
 	P extends Path
 > =
 	P extends [infer S, ...infer R]
@@ -74,13 +77,13 @@ type SelectSchemaAt<
 
 
 export function selectSchemaAt<
-	T extends ZodTypeAny,
+	T extends AnyZodType,
 	P extends Path | string
 >(schema: T, path: P): SchemaAt<T, P> {
 	const arrayPath = typeof path === "string" ? path.split(".") : path;
-	const [segment, ...rest] = arrayPath as Path;
+	const [segment, ...rest] = arrayPath;
 
-	const select = (childSchema: ZodTypeAny): any =>
+	const select = (childSchema: AnyZodType): any =>
 		rest.length ? selectSchemaAt(childSchema, rest as unknown as Path) : childSchema;
 
 	if (isZodTuple(schema)) {
