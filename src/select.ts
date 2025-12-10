@@ -1,33 +1,34 @@
 import {
 	ZodType,
-	ZodTypeDef,
 	ZodTuple,
 	ZodUnion,
 	ZodArray,
 	ZodRecord,
-	AnyZodObject,
-	infer as Infer,
+	ZodObject,
+	type infer as Infer,
 } from "zod";
 
 import {
 	isZodTuple,
 	isZodUnion,
-	isZodArrayOrRecord,
+	isZodArray,
+	isZodRecord,
 	isZodObject
 } from "./traversable";
 
 
-type AnyZodType = ZodType<any, ZodTypeDef, any>;
+// SomeType is the internal base type that all Zod schemas extend
+type AnyZodType = ZodType | { _zod: { def: { type: string } } };
 
 type ArrayIndex = "*" | null;
 type TupleIndex = number | `${number}`;
-type Segment = string | number | null; // ArrayIndex | TupleIndex | NonNumericString
 type Split<T extends string, S extends string = "."> =
 	T extends `${infer A}${S}${infer B}`
 		? [A, ...Split<B, S>]
 		: [T];
 
 
+type Segment = string | number | null; // ArrayIndex | TupleIndex | NonNumericString
 export type Path = readonly [Segment, ...Segment[]];
 
 
@@ -54,24 +55,29 @@ type SelectSchemaAt<
 > =
 	P extends [infer S, ...infer R]
 
-		? T extends ZodTuple<any>
+		? T extends ZodTuple<infer Items>
 			? S extends TupleIndex
-				? S extends keyof T["items"] ? (R extends Path ? SelectSchemaAt<T["items"][S], R> : T["items"][S]) : never
+				? S extends keyof Items ? (R extends Path ? SelectSchemaAt<Items[S], R> : Items[S]) : never
 				: never
 
-			: T extends ZodUnion<any>
+			: T extends ZodUnion<infer Options>
 				? S extends TupleIndex
-					? S extends keyof T["options"] ? (R extends Path ? SelectSchemaAt<T["options"][S], R> : T["options"][S]) : never
+					? S extends keyof Options ? (R extends Path ? SelectSchemaAt<Options[S], R> : Options[S]) : never
 					: never
 
-				: T extends ZodArray<any> | ZodRecord<any>
+				: T extends ZodArray<infer Element>
 					? S extends ArrayIndex
-						? (R extends Path ? SelectSchemaAt<T["element"], R> : T["element"])
+						? (R extends Path ? SelectSchemaAt<Element, R> : Element)
 						: never
 
-					: T extends AnyZodObject
-						? S extends keyof T["shape"] ? (R extends Path ? SelectSchemaAt<T["shape"][S], R> : T["shape"][S]) : never
-						: never
+					: T extends ZodRecord<any, infer Value>
+						? S extends ArrayIndex
+							? (R extends Path ? SelectSchemaAt<Value, R> : Value)
+							: never
+
+						: T extends ZodObject<infer Shape>
+							? S extends keyof Shape ? (R extends Path ? SelectSchemaAt<Shape[S], R> : Shape[S]) : never
+							: never
 
 		: never;
 
@@ -80,7 +86,7 @@ export function selectSchemaAt<
 	T extends AnyZodType,
 	P extends Path | string
 >(schema: T, path: P): SchemaAt<T, P> {
-	const arrayPath = typeof path === "string" ? path.split(".") : path;
+	const arrayPath = (typeof path === "string" ? path.split(".") : path) as Path;
 	const [segment, ...rest] = arrayPath;
 
 	const select = (childSchema: AnyZodType): any =>
@@ -91,11 +97,12 @@ export function selectSchemaAt<
 			throw new Error(`Invalid ZodTuple segment type: ${segment}`);
 		}
 
-		if (typeof schema.items[segment] === "undefined") {
+		const items = schema._zod.def.items;
+		if (typeof items[segment as number] === "undefined") {
 			throw new Error(`Invalid ZodTuple index: ${segment}`);
 		}
 
-		return select(schema.items[segment]);
+		return select(items[segment as number]);
 	}
 
 	if (isZodUnion(schema)) {
@@ -103,19 +110,27 @@ export function selectSchemaAt<
 			throw new Error(`Invalid ZodUnion segment type: ${segment}`);
 		}
 
-		if (typeof schema.options[segment] === "undefined") {
+		if (typeof schema.options[segment as number] === "undefined") {
 			throw new Error(`Invalid ZodUnion index: ${segment}`);
 		}
 
-		return select(schema.options[segment]);
+		return select(schema.options[segment as number]);
 	}
 
-	if (isZodArrayOrRecord(schema)) {
+	if (isZodArray(schema)) {
 		if (!isArrayIndex(segment)) {
-			throw new Error(`Invalid ZodArray or ZodRecord segment type: ${segment}`);
+			throw new Error(`Invalid ZodArray segment type: ${segment}`);
 		}
 
 		return select(schema.element);
+	}
+
+	if (isZodRecord(schema)) {
+		if (!isArrayIndex(segment)) {
+			throw new Error(`Invalid ZodRecord segment type: ${segment}`);
+		}
+
+		return select(schema.valueType);
 	}
 
 	if (isZodObject(schema)) {
@@ -124,7 +139,6 @@ export function selectSchemaAt<
 		}
 
 		if (typeof schema.shape[segment] === "undefined") {
-			console.log(schema.shape, segment)
 			throw new Error(`Invalid ZodObject index: ${segment}`);
 		}
 

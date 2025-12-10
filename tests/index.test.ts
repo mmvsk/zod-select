@@ -1,9 +1,9 @@
 import { z } from "zod";
 
 import {
-	ZodSchemaAt,
+	type ZodSchemaAt,
 	selectZodSchemaAt,
-} from "./src";
+} from "../src";
 
 function test() {
 	const ageSchema = z.number();
@@ -18,7 +18,7 @@ function test() {
 		deep: z.object({ a: z.object({ b: z.object({ c: z.string() }) }) }),
 		gender: z.enum(["male", "female"]),
 		metrics: z.object({ age: ageSchema, height: heightSchema }),
-		children: z.record(ageSchema),
+		children: z.record(z.string(), ageSchema),
 		infos: z.array(z.string()),
 		tuple: z.tuple([z.string(), z.number(), z.boolean()]),
 	});

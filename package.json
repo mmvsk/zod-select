@@ -4,10 +4,13 @@
   "type": "module",
   "version": "0.0.0",
   "license": "MIT",
+  "scripts": {
+    "typecheck": "tsgo --noEmit"
+  },
   "devDependencies": {
-    "typescript": "4.5.1-rc"
+    "@typescript/native-preview": "^7.0.0-dev.20251210.1"
   },
   "dependencies": {
-    "zod": "^3.11.6"
+    "zod": "^4.1.13"
   }
 }

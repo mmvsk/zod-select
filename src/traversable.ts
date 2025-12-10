@@ -1,24 +1,29 @@
 import {
-	ZodTypeAny,
 	ZodTuple,
 	ZodUnion,
 	ZodArray,
 	ZodRecord,
-	AnyZodObject,
+	ZodObject,
 } from "zod";
 
-export function isZodTuple(schema: ZodTypeAny): schema is ZodTuple<any> {
-	return "items" in schema;
+type AnyZodType = { _zod?: { def?: { type?: string } } };
+
+export function isZodTuple(schema: AnyZodType): schema is ZodTuple<any> {
+	return schema._zod?.def?.type === "tuple";
 }
 
-export function isZodUnion(schema: ZodTypeAny): schema is ZodUnion<any> {
-	return "options" in schema;
+export function isZodUnion(schema: AnyZodType): schema is ZodUnion<any> {
+	return schema._zod?.def?.type === "union";
 }
 
-export function isZodArrayOrRecord(schema: ZodTypeAny): schema is ZodArray<any> | ZodRecord<any> {
-	return "element" in schema;
+export function isZodArray(schema: AnyZodType): schema is ZodArray<any> {
+	return schema._zod?.def?.type === "array";
 }
 
-export function isZodObject(schema: ZodTypeAny): schema is AnyZodObject {
-	return "shape" in schema;
+export function isZodRecord(schema: AnyZodType): schema is ZodRecord<any, any> {
+	return schema._zod?.def?.type === "record";
+}
+
+export function isZodObject(schema: AnyZodType): schema is ZodObject<any> {
+	return schema._zod?.def?.type === "object";
 }
