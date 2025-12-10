@@ -7,7 +7,7 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-  	"clean": "rm test.js src/*.js",
+    "clean": "rm test.js src/*.js",
     "test": "tsc -p . && node --experimental-specifier-resolution=node test.js"
   },
   "devDependencies": {
