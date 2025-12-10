@@ -1,15 +1,9 @@
 {
   "name": "zod-select",
-  "type": "module",
-  "author": "Max Ruman <max@mmvsk.dev>",
   "description": "Experimental deep Zod schema selection",
-  "version": "1.0.0",
-  "main": "index.js",
+  "type": "module",
+  "version": "0.0.0",
   "license": "MIT",
-  "scripts": {
-    "clean": "rm test.js src/*.js",
-    "test": "tsc -p . && node --experimental-specifier-resolution=node test.js"
-  },
   "devDependencies": {
     "typescript": "4.5.1-rc"
   },
