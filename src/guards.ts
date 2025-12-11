@@ -12,7 +12,9 @@ import type {
 	ZodUnion,
 } from "zod";
 
+
 type AnyZodType = { _zod?: { def?: { type?: string } } };
+
 
 export function IsZodObject(schema: AnyZodType): schema is ZodObject<any> {
 	return schema._zod?.def?.type === "object";

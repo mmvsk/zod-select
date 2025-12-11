@@ -14,78 +14,40 @@ import {
 	IsZodPipe,
 } from "./guards";
 
+
 type Segment =
 	| { type: "property"; name: string }
 	| { type: "element" }
 	| { type: "index"; index: number };
 
+
 /**
- * Parse a path string into segments.
+ * Select a nested schema at the given path.
  *
  * @example
- * ParsePath("users[].name") // [{ type: "property", name: "users" }, { type: "element" }, { type: "property", name: "name" }]
- * ParsePath("tuple[0]") // [{ type: "property", name: "tuple" }, { type: "index", index: 0 }]
+ * ```ts
+ * const objectWithUsersTs = z.object({ users: z.array(z.object({ name: z.string() })) })
+ * const userNameTs = SelectZodSchemaAt(objectWithUsersTs, "users[].name") // ZodString
+ * ```
  */
-function ParsePath(path: string): Segment[] {
-	const segments: Segment[] = [];
-	let i = 0;
-
-	while (i < path.length) {
-		// Skip leading dot
-		if (path[i] === ".") {
-			i++;
-			continue;
-		}
-
-		// Bracket notation
-		if (path[i] === "[") {
-			const closeBracket = path.indexOf("]", i);
-			if (closeBracket === -1) {
-				throw new Error(`Invalid path: unclosed bracket at position ${i}`);
-			}
-
-			const content = path.slice(i + 1, closeBracket);
-
-			if (content === "") {
-				segments.push({ type: "element" });
-			} else {
-				const index = parseInt(content, 10);
-				if (isNaN(index) || index < 0) {
-					throw new Error(`Invalid path: invalid index "${content}" at position ${i}`);
-				}
-				segments.push({ type: "index", index });
-			}
-
-			i = closeBracket + 1;
-			continue;
-		}
-
-		// Property name
-		const nextDot = path.indexOf(".", i);
-		const nextBracket = path.indexOf("[", i);
-
-		let end: number;
-		if (nextDot === -1 && nextBracket === -1) {
-			end = path.length;
-		} else if (nextDot === -1) {
-			end = nextBracket;
-		} else if (nextBracket === -1) {
-			end = nextDot;
-		} else {
-			end = Math.min(nextDot, nextBracket);
-		}
-
-		const name = path.slice(i, end);
-		if (name === "") {
-			throw new Error(`Invalid path: empty property name at position ${i}`);
-		}
-
-		segments.push({ type: "property", name });
-		i = end;
+export function SelectZodSchemaAt<TZodType extends ZodType, TPath extends string>(
+	schema: TZodType,
+	path: TPath
+): ZodSchemaAt<TZodType, TPath> {
+	if (path === "") {
+		return schema as ZodSchemaAt<TZodType, TPath>;
 	}
 
-	return segments;
+	const segments = ParsePath(path);
+	let current: ZodType = schema;
+
+	for (const segment of segments) {
+		current = TraverseSegment(current, segment, path);
+	}
+
+	return current as ZodSchemaAt<TZodType, TPath>;
 }
+
 
 /**
  * Traverse a schema following a single segment.
@@ -167,29 +129,71 @@ function TraverseSegment(schema: ZodType, segment: Segment, fullPath: string): Z
 	}
 }
 
+
 /**
- * Select a nested schema at the given path.
+ * Parse a path string into segments.
  *
  * @example
- * ```ts
- * const schema = z.object({ users: z.array(z.object({ name: z.string() })) })
- * const nameSchema = SelectZodSchemaAt(schema, "users[].name") // ZodString
- * ```
+ * ParsePath("users[].name") // [{ type: "property", name: "users" }, { type: "element" }, { type: "property", name: "name" }]
+ * ParsePath("tuple[0]") // [{ type: "property", name: "tuple" }, { type: "index", index: 0 }]
  */
-export function SelectZodSchemaAt<T extends ZodType, P extends string>(
-	schema: T,
-	path: P
-): ZodSchemaAt<T, P> {
-	if (path === "") {
-		return schema as ZodSchemaAt<T, P>;
+function ParsePath(path: string): Segment[] {
+	const segments: Segment[] = [];
+	let i = 0;
+
+	while (i < path.length) {
+		// Skip leading dot
+		if (path[i] === ".") {
+			i++;
+			continue;
+		}
+
+		// Bracket notation
+		if (path[i] === "[") {
+			const closeBracket = path.indexOf("]", i);
+			if (closeBracket === -1) {
+				throw new Error(`Invalid path: unclosed bracket at position ${i}`);
+			}
+
+			const content = path.slice(i + 1, closeBracket);
+
+			if (content === "") {
+				segments.push({ type: "element" });
+			} else {
+				const index = parseInt(content, 10);
+				if (isNaN(index) || index < 0) {
+					throw new Error(`Invalid path: invalid index "${content}" at position ${i}`);
+				}
+				segments.push({ type: "index", index });
+			}
+
+			i = closeBracket + 1;
+			continue;
+		}
+
+		// Property name
+		const nextDot = path.indexOf(".", i);
+		const nextBracket = path.indexOf("[", i);
+
+		let end: number;
+		if (nextDot === -1 && nextBracket === -1) {
+			end = path.length;
+		} else if (nextDot === -1) {
+			end = nextBracket;
+		} else if (nextBracket === -1) {
+			end = nextDot;
+		} else {
+			end = Math.min(nextDot, nextBracket);
+		}
+
+		const name = path.slice(i, end);
+		if (name === "") {
+			throw new Error(`Invalid path: empty property name at position ${i}`);
+		}
+
+		segments.push({ type: "property", name });
+		i = end;
 	}
 
-	const segments = ParsePath(path);
-	let current: ZodType = schema;
-
-	for (const segment of segments) {
-		current = TraverseSegment(current, segment, path);
-	}
-
-	return current as ZodSchemaAt<T, P>;
+	return segments;
 }
