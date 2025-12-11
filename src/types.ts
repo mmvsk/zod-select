@@ -119,10 +119,10 @@ type ResolvePath<T, Segments extends readonly string[]> =
  * @example
  * ```ts
  * const schema = z.object({ users: z.array(z.object({ name: z.string() })) })
- * type T = SchemaAt<typeof schema, "users[].name"> // ZodString
+ * type T = ZodSchemaAt<typeof schema, "users[].name"> // ZodString
  * ```
  */
-export type SchemaAt<T extends ZodType, P extends string> = ResolvePath<T, ParsePath<P>>;
+export type ZodSchemaAt<T extends ZodType, P extends string> = ResolvePath<T, ParsePath<P>>;
 
 /**
  * Infer the value type at a given path.
@@ -130,7 +130,7 @@ export type SchemaAt<T extends ZodType, P extends string> = ResolvePath<T, Parse
  * @example
  * ```ts
  * const schema = z.object({ users: z.array(z.object({ name: z.string() })) })
- * type T = InferAt<typeof schema, "users[].name"> // string
+ * type T = ZodOutputAt<typeof schema, "users[].name"> // string
  * ```
  */
-export type InferAt<T extends ZodType, P extends string> = Infer<SchemaAt<T, P>>;
+export type ZodOutputAt<T extends ZodType, P extends string> = Infer<ZodSchemaAt<T, P>>;

@@ -1,17 +1,17 @@
 import type { ZodType } from "zod";
-import type { SchemaAt } from "./types";
+import type { ZodSchemaAt } from "./types";
 import {
-	isZodObject,
-	isZodArray,
-	isZodRecord,
-	isZodTuple,
-	isZodUnion,
-	isZodOptional,
-	isZodNullable,
-	isZodDefault,
-	isZodReadonly,
-	isZodLazy,
-	isZodPipe,
+	IsZodObject,
+	IsZodArray,
+	IsZodRecord,
+	IsZodTuple,
+	IsZodUnion,
+	IsZodOptional,
+	IsZodNullable,
+	IsZodDefault,
+	IsZodReadonly,
+	IsZodLazy,
+	IsZodPipe,
 } from "./guards";
 
 type Segment =
@@ -23,10 +23,10 @@ type Segment =
  * Parse a path string into segments.
  *
  * @example
- * parsePath("users[].name") // [{ type: "property", name: "users" }, { type: "element" }, { type: "property", name: "name" }]
- * parsePath("tuple[0]") // [{ type: "property", name: "tuple" }, { type: "index", index: 0 }]
+ * ParsePath("users[].name") // [{ type: "property", name: "users" }, { type: "element" }, { type: "property", name: "name" }]
+ * ParsePath("tuple[0]") // [{ type: "property", name: "tuple" }, { type: "index", index: 0 }]
  */
-function parsePath(path: string): Segment[] {
+function ParsePath(path: string): Segment[] {
 	const segments: Segment[] = [];
 	let i = 0;
 
@@ -90,32 +90,32 @@ function parsePath(path: string): Segment[] {
 /**
  * Traverse a schema following a single segment.
  */
-function traverseSegment(schema: ZodType, segment: Segment, fullPath: string): ZodType {
+function TraverseSegment(schema: ZodType, segment: Segment, fullPath: string): ZodType {
 	// Unwrap wrapper types first (optional, nullable, default, readonly, lazy, pipe)
-	if (isZodOptional(schema)) {
-		return traverseSegment(schema._zod.def.innerType, segment, fullPath);
+	if (IsZodOptional(schema)) {
+		return TraverseSegment(schema._zod.def.innerType, segment, fullPath);
 	}
-	if (isZodNullable(schema)) {
-		return traverseSegment(schema._zod.def.innerType, segment, fullPath);
+	if (IsZodNullable(schema)) {
+		return TraverseSegment(schema._zod.def.innerType, segment, fullPath);
 	}
-	if (isZodDefault(schema)) {
-		return traverseSegment(schema._zod.def.innerType, segment, fullPath);
+	if (IsZodDefault(schema)) {
+		return TraverseSegment(schema._zod.def.innerType, segment, fullPath);
 	}
-	if (isZodReadonly(schema)) {
-		return traverseSegment(schema._zod.def.innerType, segment, fullPath);
+	if (IsZodReadonly(schema)) {
+		return TraverseSegment(schema._zod.def.innerType, segment, fullPath);
 	}
-	if (isZodLazy(schema)) {
-		return traverseSegment(schema._zod.innerType, segment, fullPath);
+	if (IsZodLazy(schema)) {
+		return TraverseSegment(schema._zod.innerType, segment, fullPath);
 	}
-	if (isZodPipe(schema)) {
+	if (IsZodPipe(schema)) {
 		// For pipe, traverse into the output schema
-		return traverseSegment(schema._zod.def.out, segment, fullPath);
+		return TraverseSegment(schema._zod.def.out, segment, fullPath);
 	}
 
 	// Handle segment types
 	switch (segment.type) {
 		case "property": {
-			if (!isZodObject(schema)) {
+			if (!IsZodObject(schema)) {
 				throw new Error(
 					`Invalid path "${fullPath}": cannot access property "${segment.name}" on non-object schema (got ${schema._zod.def.type})`
 				);
@@ -130,10 +130,10 @@ function traverseSegment(schema: ZodType, segment: Segment, fullPath: string): Z
 		}
 
 		case "element": {
-			if (isZodArray(schema)) {
+			if (IsZodArray(schema)) {
 				return schema._zod.def.element;
 			}
-			if (isZodRecord(schema)) {
+			if (IsZodRecord(schema)) {
 				return schema._zod.def.valueType;
 			}
 			throw new Error(
@@ -142,7 +142,7 @@ function traverseSegment(schema: ZodType, segment: Segment, fullPath: string): Z
 		}
 
 		case "index": {
-			if (isZodTuple(schema)) {
+			if (IsZodTuple(schema)) {
 				const items = schema._zod.def.items;
 				if (segment.index >= items.length) {
 					throw new Error(
@@ -151,7 +151,7 @@ function traverseSegment(schema: ZodType, segment: Segment, fullPath: string): Z
 				}
 				return items[segment.index];
 			}
-			if (isZodUnion(schema)) {
+			if (IsZodUnion(schema)) {
 				const options = schema._zod.def.options;
 				if (segment.index >= options.length) {
 					throw new Error(
@@ -173,23 +173,23 @@ function traverseSegment(schema: ZodType, segment: Segment, fullPath: string): Z
  * @example
  * ```ts
  * const schema = z.object({ users: z.array(z.object({ name: z.string() })) })
- * const nameSchema = select(schema, "users[].name") // ZodString
+ * const nameSchema = SelectZodSchemaAt(schema, "users[].name") // ZodString
  * ```
  */
-export function select<T extends ZodType, P extends string>(
+export function SelectZodSchemaAt<T extends ZodType, P extends string>(
 	schema: T,
 	path: P
-): SchemaAt<T, P> {
+): ZodSchemaAt<T, P> {
 	if (path === "") {
-		return schema as SchemaAt<T, P>;
+		return schema as ZodSchemaAt<T, P>;
 	}
 
-	const segments = parsePath(path);
+	const segments = ParsePath(path);
 	let current: ZodType = schema;
 
 	for (const segment of segments) {
-		current = traverseSegment(current, segment, path);
+		current = TraverseSegment(current, segment, path);
 	}
 
-	return current as SchemaAt<T, P>;
+	return current as ZodSchemaAt<T, P>;
 }

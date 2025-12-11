@@ -14,46 +14,46 @@ import type {
 
 type AnyZodType = { _zod?: { def?: { type?: string } } };
 
-export function isZodObject(schema: AnyZodType): schema is ZodObject<any> {
+export function IsZodObject(schema: AnyZodType): schema is ZodObject<any> {
 	return schema._zod?.def?.type === "object";
 }
 
-export function isZodArray(schema: AnyZodType): schema is ZodArray<any> {
+export function IsZodArray(schema: AnyZodType): schema is ZodArray<any> {
 	return schema._zod?.def?.type === "array";
 }
 
-export function isZodRecord(schema: AnyZodType): schema is ZodRecord<any, any> {
+export function IsZodRecord(schema: AnyZodType): schema is ZodRecord<any, any> {
 	return schema._zod?.def?.type === "record";
 }
 
-export function isZodTuple(schema: AnyZodType): schema is ZodTuple<any> {
+export function IsZodTuple(schema: AnyZodType): schema is ZodTuple<any> {
 	return schema._zod?.def?.type === "tuple";
 }
 
-export function isZodUnion(schema: AnyZodType): schema is ZodUnion<any> {
+export function IsZodUnion(schema: AnyZodType): schema is ZodUnion<any> {
 	return schema._zod?.def?.type === "union";
 }
 
-export function isZodOptional(schema: AnyZodType): schema is ZodOptional<any> {
+export function IsZodOptional(schema: AnyZodType): schema is ZodOptional<any> {
 	return schema._zod?.def?.type === "optional";
 }
 
-export function isZodNullable(schema: AnyZodType): schema is ZodNullable<any> {
+export function IsZodNullable(schema: AnyZodType): schema is ZodNullable<any> {
 	return schema._zod?.def?.type === "nullable";
 }
 
-export function isZodDefault(schema: AnyZodType): schema is ZodDefault<any> {
+export function IsZodDefault(schema: AnyZodType): schema is ZodDefault<any> {
 	return schema._zod?.def?.type === "default";
 }
 
-export function isZodReadonly(schema: AnyZodType): schema is ZodReadonly<any> {
+export function IsZodReadonly(schema: AnyZodType): schema is ZodReadonly<any> {
 	return schema._zod?.def?.type === "readonly";
 }
 
-export function isZodLazy(schema: AnyZodType): schema is ZodLazy<any> {
+export function IsZodLazy(schema: AnyZodType): schema is ZodLazy<any> {
 	return schema._zod?.def?.type === "lazy";
 }
 
-export function isZodPipe(schema: AnyZodType): schema is ZodPipe<any, any> {
+export function IsZodPipe(schema: AnyZodType): schema is ZodPipe<any, any> {
 	return schema._zod?.def?.type === "pipe";
 }

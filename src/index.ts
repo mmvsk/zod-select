@@ -1,2 +1,2 @@
-export { select } from "./select";
-export type { SchemaAt, InferAt } from "./types";
+export { SelectZodSchemaAt } from "./select";
+export type { ZodSchemaAt, ZodOutputAt } from "./types";
