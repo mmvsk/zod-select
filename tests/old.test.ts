@@ -4,7 +4,7 @@ import { z } from "zod";
 import {
 	type ZodSchemaAt,
 	selectZodSchemaAt,
-} from "../src";
+} from "../src/old";
 
 const ageSchema = z.number();
 const nameSchema = z.string();
