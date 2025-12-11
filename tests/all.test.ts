@@ -1,7 +1,7 @@
 import { test, expect, describe } from "bun:test";
 import { z } from "zod";
 
-import { select, type SchemaAt, type InferAt } from "../src/new";
+import { select, type SchemaAt, type InferAt } from "../src";
 
 // Test schema covering various types
 const schema = z.object({
